@@ -116,7 +116,7 @@ namespace WebGoatFuzzer
                     if (wbWebGoat.Document.Body.InnerText.StartsWith("[ {\r\n  \"id\" : \"2\""))
                     {
                         ipAddress += ipChars[curChar];
-                        txtIP.Text = ipAddress;
+                        txtIp.Text = ipAddress;
                         break;
                     }
 
@@ -124,6 +124,11 @@ namespace WebGoatFuzzer
                 }
                 curPosition++;
             }
+        }
+
+        private void wbWebGoat_Navigated(object sender, WebBrowserNavigatedEventArgs e)
+        {
+            txtUrl.Text = wbWebGoat.Url.ToString();
         }
     }
 }
